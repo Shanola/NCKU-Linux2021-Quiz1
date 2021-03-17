@@ -108,11 +108,14 @@ void list_free(node_t **list)
 
 int main(int argc, char **argv)
 {
-    srandom(time(NULL));
+    // srandom(time(NULL));
+    srand(time(NULL));
     size_t count = 20;
     node_t *list = NULL;
     while (count--) {
-        list = list_make_node_t(list, random() % 1024);
+        // list = list_make_node_t(list, random() % 1024);
+        list = list_make_node_t(list, rand() % 1024);
+        
     }
     list_display(list);
     quicksort(&list);
