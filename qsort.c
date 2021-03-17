@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <time.h>
 typedef struct __node {
     int value;
     struct __node *next;
@@ -108,6 +108,7 @@ void list_free(node_t **list)
 
 int main(int argc, char **argv)
 {
+    srandom(time(NULL));
     size_t count = 20;
     node_t *list = NULL;
     while (count--) {
