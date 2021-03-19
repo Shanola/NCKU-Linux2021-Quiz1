@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+#define MAX_LEVELS 1000
+#define LIST_COUNTS 20
+
 typedef struct __node {
     int value;
     struct __node *next;
@@ -46,6 +50,61 @@ void quicksort(node_t **list)
     list_concat(&result, pivot);
     list_concat(&result, right);
     *list = result;
+}
+
+void qsort_non_recursive(node_t **list)
+{ 
+    if (!*list) {
+        return;
+	}
+	int arr[LIST_COUNTS];
+	node_t *tmp = *list;
+	for (int i=0; i<LIST_COUNTS; i++) {
+	    arr[i] = tmp->value;
+		tmp = tmp->next;
+	}
+	int i=0;
+	int pivot, begin[MAX_LEVELS], end[MAX_LEVELS], L, R;
+	begin[0] = 0;
+	end[0] = LIST_COUNTS;
+	while (i >= 0) {
+        L = begin[i];
+		R = end[i] - 1;
+		if (L < R) {
+		    pivot = arr[L];
+			if (i == MAX_LEVELS) assert(i != MAX_LEVELS);
+			while (L < R) {
+			    while (arr[R] >= pivot && L < R) {
+			        R--;
+			    }
+			    if (L < R) {
+			        arr[L] = arr[R];
+			    	L++;
+			    }
+		    	while (arr[L] <= pivot && L < R) {
+			        L++;
+		    	}
+		    	if (L < R) {
+		    	    arr[R] = arr[L];
+		    		R--;
+		    	}
+			}
+			arr[L] = pivot;
+			begin[i+1] = L+1;
+			end[i+1] = end[i];
+			end[i] = L;
+			i++;
+		} else {
+		    i--;
+		}
+	}
+	tmp = *list;
+	for (int i=0; i<LIST_COUNTS; i++) {
+        // printf("%d ", arr[i]);
+		tmp->value = arr[i];
+		tmp = tmp->next;
+	}
+	// printf("\n");
 }
 
 static bool list_is_ordered(node_t *list)
@@ -108,18 +167,17 @@ void list_free(node_t **list)
 
 int main(int argc, char **argv)
 {
-    // srandom(time(NULL));
     srand(time(NULL));
-    size_t count = 20;
+    size_t count = LIST_COUNTS;
     node_t *list = NULL;
     while (count--) {
-        // list = list_make_node_t(list, random() % 1024);
-        list = list_make_node_t(list, rand() % 1024);
-        
+        list = list_make_node_t(list, rand() % 1024);    
     }
     list_display(list);
-    quicksort(&list);
-    list_display(list);
+    qsort_non_recursive(&list);
+	// quicksort(&list);
+    qsort_non_recursive(&list);
+	list_display(list);
 
     if (!list_is_ordered(list))
         return EXIT_FAILURE;
