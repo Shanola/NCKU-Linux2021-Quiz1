@@ -10,6 +10,7 @@
 typedef struct __node {
     int value;
     struct __node *next;
+	struct __node *prev;
 } node_t;
 
 static inline void list_add_node_t(node_t **list, node_t *node_t)
@@ -20,9 +21,14 @@ static inline void list_add_node_t(node_t **list, node_t *node_t)
 
 static inline void list_concat(node_t **left, node_t *right)
 {
-    while (*left)
-        left = &((*left)->next);
-    *left = right;
+    if (!(*left)) {
+	    *left = right;
+	} else {
+        while ((*left)->next) {
+            left = &((*left)->next);
+		}
+		(*left)->next = right;
+	}
 }
 
 void quicksort(node_t **list)
@@ -35,7 +41,7 @@ void quicksort(node_t **list)
     node_t *p = pivot->next;
     pivot->next = NULL;
 
-    node_t *left = NULL, *right = NULL;
+	node_t *left = NULL, *right = NULL;
     while (p) {
         node_t *n = p;
         p = p->next;
@@ -46,7 +52,7 @@ void quicksort(node_t **list)
     quicksort(&right);
 
     node_t *result = NULL;
-    list_concat(&result, left);
+	list_concat(&result, left);
     list_concat(&result, pivot);
     list_concat(&result, right);
     *list = result;
@@ -54,43 +60,50 @@ void quicksort(node_t **list)
 
 void qsort_non_recursive(node_t **list)
 { 
-    if (!*list) {
+    if (!(*list)) {
         return;
 	}
-	int arr[LIST_COUNTS];
-	node_t *tmp = *list;
-	for (int i=0; i<LIST_COUNTS; i++) {
-	    arr[i] = tmp->value;
-		tmp = tmp->next;
-	}
 	int i=0;
-	int pivot, begin[MAX_LEVELS], end[MAX_LEVELS], L, R;
-	begin[0] = 0;
-	end[0] = LIST_COUNTS;
+	int pivot;
+
+	node_t **begin = (node_t **)malloc(MAX_LEVELS * sizeof(node_t));
+	node_t **end = (node_t **)malloc(MAX_LEVELS * sizeof(node_t));
+	for(int i=0; i<MAX_LEVELS; i++) {
+	    begin[i] = (node_t *)malloc(1 * sizeof(node_t));
+		end[i] = (node_t *)malloc(1 * sizeof(node_t));
+	}
+	node_t *L;
+	node_t *R;
+	begin[0] = *list; //head of list
+	node_t *tmp = *list;
+	while (tmp->next) {
+	    tmp = tmp->next;
+	}
+	end[0] = tmp; // tail of list
 	while (i >= 0) {
-        L = begin[i];
-		R = end[i] - 1;
-		if (L < R) {
-		    pivot = arr[L];
+        L = begin[i]; // left node of each round
+		R = end[i]; // right node of each round
+		if (L != R && L && R) {
+		    pivot = L->value;
 			if (i == MAX_LEVELS) assert(i != MAX_LEVELS);
-			while (L < R) {
-			    while (arr[R] >= pivot && L < R) {
-			        R--;
+			while (L != R && L && R) {
+			    while (R->value >= pivot && L != R) {
+			        R = R->prev;
 			    }
-			    if (L < R) {
-			        arr[L] = arr[R];
-			    	L++;
+			    if (L != R) {
+				    L->value = R->value;
+			    	L = L->next;
 			    }
-		    	while (arr[L] <= pivot && L < R) {
-			        L++;
+		    	while (L->value <= pivot && L != R) {
+			        L = L->next;
 		    	}
-		    	if (L < R) {
-		    	    arr[R] = arr[L];
-		    		R--;
+		    	if (L != R) {
+		    	    R->value = L->value;
+			        R = R->prev;
 		    	}
 			}
-			arr[L] = pivot;
-			begin[i+1] = L+1;
+			L->value = pivot;
+			begin[i+1] = L->next;
 			end[i+1] = end[i];
 			end[i] = L;
 			i++;
@@ -98,14 +111,8 @@ void qsort_non_recursive(node_t **list)
 		    i--;
 		}
 	}
-	tmp = *list;
-	for (int i=0; i<LIST_COUNTS; i++) {
-        // printf("%d ", arr[i]);
-		tmp->value = arr[i];
-		tmp = tmp->next;
-	}
-	// printf("\n");
 }
+
 
 static bool list_is_ordered(node_t *list)
 {
@@ -144,15 +151,17 @@ node_t *list_make_node_t(node_t *list, int value)
     }
     n->value = value;
     n->next = NULL;
+	n->prev = NULL;
     if (!list) {
         return n;
     } else {
-        node_t *p = list;
-        while (list->next) {
-            list = (list->next);
+        node_t *tmp = list;
+        while (tmp->next) {
+            tmp = (tmp->next);
         }
-        list->next = n;
-        return p;
+        tmp->next = n;
+		n->prev = tmp;
+        return list;
     }
 }
 
@@ -174,12 +183,11 @@ int main(int argc, char **argv)
         list = list_make_node_t(list, rand() % 1024);    
     }
     list_display(list);
-    qsort_non_recursive(&list);
-	// quicksort(&list);
-    qsort_non_recursive(&list);
+	//quicksort(&list);
+	qsort_non_recursive(&list);
 	list_display(list);
-
-    if (!list_is_ordered(list))
+    
+	if (!list_is_ordered(list))
         return EXIT_FAILURE;
 
     list_free(&list);
